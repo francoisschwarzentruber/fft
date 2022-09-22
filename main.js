@@ -58,6 +58,25 @@ function add(c1, c2) { return c1.concat(c2) };
 function mult(c1, c2) { return c2.map(c => multC(c1, c)) };
 function opposite(c) { return c.map(oppositeC) };
 
+
+
+function arrow(ctx, x, y, angle, S = 0.2, A = 0.3) {
+    ctx.beginPath();
+    ctx.moveTo(x - S * Math.cos(angle - A), y - S * Math.sin(angle - A));
+    ctx.lineTo(x, y);
+    ctx.lineTo(x - S * Math.cos(angle + A), y - S * Math.sin(angle + A));
+    ctx.stroke();
+}
+
+
+
+function linearrow(ctx, x1, y1, x2, y2) {
+    line(ctx, x1, y1, x2, y2);
+    arrow(ctx, x2, y2, Math.atan2(y2 - y1, x2 - x1));
+}
+
+
+
 function drawComplex(ctx, x, y, c) {
     ctx.beginPath();
     const rpoint = 0.1;
@@ -69,10 +88,14 @@ function drawComplex(ctx, x, y, c) {
     ctx.lineWidth = 0.15;
 
     for (let i = 0; i < c.length; i++) {
-        ctx.strokeStyle = c[i].color ? c[i].color : "green"
-        line(ctx, x, y, x + c[i].a * r, y - c[i].b * r);
-        x = x + c[i].a * r;
-        y = y - c[i].b * r;
+        if(c[i].a != 0 || c[i].b != 0) {
+            ctx.lineWidth = i == 0 ? 0.15 : 0.1 - 0.05 * i / c.length;
+            ctx.strokeStyle = c[i].color ? c[i].color : "green"
+            linearrow(ctx, x, y, x + c[i].a * r, y - c[i].b * r);
+            x = x + c[i].a * r;
+            y = y - c[i].b * r;
+    
+        }
 
     }
     ctx.lineWidth = 0.05;
@@ -183,26 +206,9 @@ function draw(ctx) {
 
 
     const signal = [1, 0, 1, 0, 0, 0, 0, 1];
-    //    const signal = [1, -1, 1, 1, 1, 1, 1, 0.5];
+    //const signal = [1, -1, 1, 1, 1, 1, 1, 0.5];
     fftcircuit(ctx, 0, 0, size, signal.map((n, i) => ([{ a: n, b: 0, color: colors[i] }])))
-    /*
-    straightLines(ctx, 0, 1);
-    messupLines(ctx, 1, 3, 0, 4);
-    straightLines(ctx, 3, 4);
 
-    messupLines(ctx, 4, 6, 0, 2);
-    messupLines(ctx, 4, 6, 4, 2);
-    straightLines(ctx, 6, 19);
-
-    ctx.strokeStyle = "pink";
-
-    for (let y = 0; y < 7; y += 2)
-        butterflies(ctx, 6, y, 1);
-
-    for (let y = 0; y < 5; y += 4)
-        butterflies(ctx, 9, y, 2);
-
-    butterflies(ctx, 13, 0, 4);*/
 
     ctx.restore();
 }
