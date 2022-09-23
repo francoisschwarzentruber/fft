@@ -5,11 +5,18 @@ const SCALE = 128;
 const SCALECOMPLEX = 0.5;
 const CIRCUITSCALE = 0.5;
 const BUTTERFLIESSCALE = 0.7;
+const COLORBUTTERFLY = "pink";
+const LINEWIDTHWIRE = 0.01;
+const LINEWIDTHBUTTERFLY = 0.01;
+
+const colors = ["rgb(128, 192, 255)", "cyan", "green", "rgb(0, 192, 0)", "yellow", "orange", "rgb(255, 64, 0)", "rgb(255, 0, 192)", ,];
+
 
 function straightLines(ctx, x1, x2, ytop, n) {
     ctx.strokeStyle = "white";
     for (let w = ytop; w < ytop + n; w++) {
         ctx.beginPath();
+        ctx.lineWidth = LINEWIDTHWIRE;
         ctx.moveTo(x1, w);
         ctx.lineTo(x2, w);
         ctx.stroke();
@@ -23,6 +30,7 @@ function messupLines(ctx, x1, x2, ytop, n) {
         const i2 = ytop + i
         const j = ytop + ((i % 2 == 0) ? i / 2 : n + Math.floor(i / 2));
         ctx.beginPath();
+        ctx.lineWidth = LINEWIDTHWIRE;
         ctx.moveTo(x1, i2);
         ctx.bezierCurveTo(x1 + 0.5, i2, x2 - 0.5, j, x2, j);
         ctx.stroke();
@@ -41,6 +49,7 @@ function line(ctx, x1, y1, x2, y2) {
 
 
 function butterfly(ctx, x, y1, y2) {
+    ctx.lineWidth = LINEWIDTHBUTTERFLY;
     line(ctx, x, y1, x + 0.25, y2);
     line(ctx, x, y2, x + 0.25, y1);
 }
@@ -48,6 +57,13 @@ function butterfly(ctx, x, y1, y2) {
 function butterflies(ctx, x, ytop, n) {
     for (let y = ytop; y < ytop + n; y++) {
         butterfly(ctx, x + CIRCUITSCALE * BUTTERFLIESSCALE * (y - ytop), y, y + n);
+
+        let angle = (y - ytop) * Math.PI / n;
+        let r = 0.3;
+        let omega = { a: r * Math.cos(angle), b: r * Math.sin(angle), color: COLORBUTTERFLY };
+
+        drawComplexArrow(ctx, x + CIRCUITSCALE * BUTTERFLIESSCALE * (y - ytop + 0.4), y  + 0.3, omega)
+        drawComplexArrow(ctx, x + CIRCUITSCALE * BUTTERFLIESSCALE * (y - ytop + 0.4), y + n - 0.3, oppositeC(omega))
     }
 }
 
@@ -59,9 +75,9 @@ function multC({ a: a1, b: b1 }, { a: a2, b: b2, color: color }) { return { a: a
 function oppositeC({ a: a1, b: b1, color: color }) { return { a: -a1, b: -b1, color: color } };
 
 
-function add(c1, c2) { return c1.concat(c2) };
-function mult(c1, c2) { return c2.map(c => multC(c1, c)) };
-function opposite(c) { return c.map(oppositeC) };
+function add(complexArray1, complexArray2) { return complexArray1.concat(complexArray2) };
+function mult(complex1, complexArray2) { return complexArray2.map(c => multC(complex1, c)) };
+function opposite(complexArray) { return complexArray.map(oppositeC) };
 
 
 
@@ -84,24 +100,28 @@ function linearrow(ctx, x1, y1, x2, y2) {
 }
 
 
+function drawComplexArrow(ctx, x, y, complex) {
+    linearrow(ctx, x, y, x + complex.a * SCALECOMPLEX, y - complex.b * SCALECOMPLEX);
+}
 
-function drawComplex(ctx, x, y, c) {
+
+
+function drawComplex(ctx, x, y, complexArray) {
     ctx.beginPath();
-    const rpoint = 0.1;
+    const rpoint = 0.05;
     const r = SCALECOMPLEX;
     ctx.fillStyle = "white"
     ctx.arc(x, y, rpoint, 0, 2 * Math.PI);
     ctx.fill();
 
-    ctx.lineWidth = c.length == 1 ? 0.1 : 0.05;
+    ctx.lineWidth = 0.05;
 
-    for (let i = 0; i < c.length; i++) {
-        if (c[i].a != 0 || c[i].b != 0) {
-            ctx.strokeStyle = c[i].color
-            linearrow(ctx, x, y, x + c[i].a * r, y - c[i].b * r);
-            x = x + c[i].a * r;
-            y = y - c[i].b * r;
-
+    for (let i = 0; i < complexArray.length; i++) {
+        if (complexArray[i].a != 0 || complexArray[i].b != 0) {
+            ctx.strokeStyle = complexArray[i].color
+            drawComplexArrow(ctx, x, y, complexArray[i]);
+            x = x + complexArray[i].a * r;
+            y = y - complexArray[i].b * r;
         }
 
     }
@@ -125,7 +145,6 @@ function drawComplex(ctx, x, y, { a: a, b: b, color: color }) {
 }*/
 
 
-const colors = ["rgb(0, 192, 0)", "rgb(255, 64, 0)", "yellow", "cyan", "orange", "rgb(255, 0, 192)", "green", "rgb(128, 192, 255)"];
 
 
 function fftcircuit(ctx, x, ytop, n, signal, signalLabels) {
@@ -147,11 +166,13 @@ function fftcircuit(ctx, x, ytop, n, signal, signalLabels) {
 
 
     ctx.strokeStyle = "white";
-
     if (n > 2) {
         messupLines(ctx, x + 2 * CIRCUITSCALE, x + 4 * CIRCUITSCALE, ytop, n / 2);
         x += 2 * CIRCUITSCALE;
     }
+
+
+
     function even(s) {
         const result = [];
         for (let i = 0; i < s.length; i += 2)
@@ -175,7 +196,7 @@ function fftcircuit(ctx, x, ytop, n, signal, signalLabels) {
     const xfinal = butterfliesxleft + (n / 2) * BUTTERFLIESSCALE * CIRCUITSCALE + 1.7 * CIRCUITSCALE;
 
     straightLines(ctx, x2, xfinal, ytop, n);
-    ctx.strokeStyle = "pink";
+    ctx.strokeStyle = COLORBUTTERFLY;
 
     for (let y = 0; y < (2 * size / n); y += (2 * size / n))
         butterflies(ctx, butterfliesxleft + y ** CIRCUITSCALE, ytop + y, n / 2);
@@ -192,19 +213,21 @@ function fftcircuit(ctx, x, ytop, n, signal, signalLabels) {
     }
 
     for (let w = 0; w < signal.length; w++)
-        drawComplex(ctx, xfinal - 0.5, ytop + w, result[w])
+        drawComplex(ctx, xfinal, ytop + w, result[w])
 
+    ctx.beginPath();
     ctx.lineWidth = 0.02;
-    ctx.strokeStyle = "lightgrey";
+    ctx.strokeStyle = "grey";
     ctx.fillStyle = "rgba(128, 128, 128, 0.2)";
     const margin = n / size;
     const MARGINETRA = 0.3;
     const MARGINMIN = 0.3;
-    const rect = { x: x + 2.2 * CIRCUITSCALE, y: ytop - MARGINMIN - MARGINETRA * margin, w: xfinal - x - 3.8 * CIRCUITSCALE, h: n - 1 + 2 * MARGINMIN + MARGINETRA * 2 * margin }
+    const rect = { x: x + 2.3 * CIRCUITSCALE, y: ytop - MARGINMIN - MARGINETRA * margin, w: xfinal - x - 3.8 * CIRCUITSCALE, h: n - 1 + 2 * MARGINMIN + MARGINETRA * 2 * margin }
     ctx.rect(rect.x, rect.y, rect.w, rect.h);
     ctx.stroke();
     ctx.lineWidth = 0.05;
 
+    /*
     function isPointInRect(p, r) {
         if (p.x < r.x)
             return false;
@@ -219,12 +242,12 @@ function fftcircuit(ctx, x, ytop, n, signal, signalLabels) {
             return false;
 
         return true;
-    }
+    }*/
 
 
-/*    if (!isPointInRect(mouse, rect))
-        ctx.fill();
-*/
+    /*    if (!isPointInRect(mouse, rect))
+            ctx.fill();
+    */
     return { x: xfinal, result: result };
 }
 
