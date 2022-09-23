@@ -1,5 +1,5 @@
 const size = 8;
-const signal = [1, -1, 1, 1, 1, 1, 1, 0.5].map((n) => ({ a: n, b: 0 }));
+const signal = [1, 0, 0, 0, 0, 1, 0, 0].map((n) => ({ a: n, b: 0 }));
 let mouse = 0;
 const SCALE = 128;
 const SCALECOMPLEX = 0.5;
