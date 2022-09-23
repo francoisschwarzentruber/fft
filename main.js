@@ -222,10 +222,9 @@ function fftcircuit(ctx, x, ytop, n, signal, signalLabels) {
     }
 
 
-    if (!isPointInRect(mouse, rect))
-        //    if (n <= 1)
+/*    if (!isPointInRect(mouse, rect))
         ctx.fill();
-
+*/
     return { x: xfinal, result: result };
 }
 
