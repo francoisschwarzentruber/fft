@@ -287,8 +287,30 @@ function fftcircuit(ctx, x, ytop, n, signal, signalLabels) {
         omegacurrent = multC(omegacurrent, omega);
     }
 
-    for (let w = 0; w < signal.length; w++)
+    for (let w = 0; w < signal.length; w++) {
         drawComplex(ctx, xfinal, ytop + w, result[w])
+
+        function exprOmega(pow) {
+            return `w^{${pow % size}}`;
+        }
+        function polynomialExpr(signalLabels, power) {
+            let s = "";
+            for (let i = 0; i < signalLabels.length; i++) {
+                if (s.length > 0)
+                    s += " + ";
+                s += signalLabels[i].replace("a", "a_") + ((i > 0) ? `w^{${(w*i*power) % size}}` : "");
+
+            }
+            return s;
+        }
+        if (Math.abs(xfinal - mouse.x) < 0.5 && Math.abs(ytop + w - mouse.y) < 0.5) {
+            
+            value.innerHTML = `$$${polynomialExpr(signalLabels, size/n)} = ${polynomialExpr(even(signalLabels), 2*size/n)} + ${exprOmega(w*size/n)} \\times (${polynomialExpr(odd(signalLabels), 2*size/n)})$$`;
+            window.renderMathInElement(value)
+
+        }
+    }
+
 
     ctx.beginPath();
     ctx.lineWidth = 0.02;
@@ -313,6 +335,7 @@ function fftcircuit(ctx, x, ytop, n, signal, signalLabels) {
  * @description draw the whole circuit 
  */
 function draw(ctx) {
+    value.innerHTML = "";
     ctx.clearRect(0, 0, 6040, 4080);
 
 
