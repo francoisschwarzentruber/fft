@@ -6,8 +6,8 @@ const SCALECOMPLEX = 0.5;
 const CIRCUITSCALE = 0.5;
 const BUTTERFLIESSCALE = 0.7;
 const COLORBUTTERFLY = "pink";
-const LINEWIDTHWIRE = 0.01;
-const LINEWIDTHBUTTERFLY = 0.01;
+const LINEWIDTHWIRE = 0.02;
+const LINEWIDTHBUTTERFLY = 0.03;
 
 const colors = ["rgb(128, 192, 255)", "cyan", "green", "rgb(0, 192, 0)", "yellow", "orange", "rgb(255, 64, 0)", "rgb(255, 0, 192)", ,];
 
@@ -226,9 +226,10 @@ function fftcircuit(ctx, x, ytop, n, signal, signalLabels) {
     if (n == 1)
         return { x: x, result: signal };
 
+    const xinitial = (n > 2) ? x + 2 * CIRCUITSCALE : x+2*CIRCUITSCALE;
     ctx.strokeStyle = "white";
 
-    straightLines(ctx, x, x + 2 * CIRCUITSCALE, ytop, n);
+    straightLines(ctx, x, x + 3 * CIRCUITSCALE, ytop, n);
     for (let w = 0; w < signalLabels.length; w++) {
         ctx.fillStyle = "black"
         ctx.fillRect(x - 0.4 * CIRCUITSCALE, ytop + w - 0.1 - 0.3, 0.3, 0.3)
@@ -239,10 +240,10 @@ function fftcircuit(ctx, x, ytop, n, signal, signalLabels) {
     for (let w = 0; w < signal.length; w++)
         drawComplex(ctx, x + 1 * CIRCUITSCALE, ytop + w, signal[w])
 
-
+    x += 3 * CIRCUITSCALE;
     ctx.strokeStyle = "white";
     if (n > 2) {
-        messupLines(ctx, x + 2 * CIRCUITSCALE, x + 4 * CIRCUITSCALE, ytop, n / 2);
+        messupLines(ctx, x, x + 2 * CIRCUITSCALE, ytop, n / 2);
         x += 2 * CIRCUITSCALE;
     }
 
@@ -264,8 +265,8 @@ function fftcircuit(ctx, x, ytop, n, signal, signalLabels) {
     }
 
 
-    const { x: x1, result: result1 } = fftcircuit(ctx, x + 2 * CIRCUITSCALE, ytop, n / 2, even(signal), even(signalLabels));
-    const { x: x2, result: result2 } = fftcircuit(ctx, x + 2 * CIRCUITSCALE, ytop + n / 2, n / 2, odd(signal), odd(signalLabels));
+    const { x: x1, result: result1 } = fftcircuit(ctx, x, ytop, n / 2, even(signal), even(signalLabels));
+    const { x: x2, result: result2 } = fftcircuit(ctx, x, ytop + n / 2, n / 2, odd(signal), odd(signalLabels));
 
     const butterfliesxleft = (n <= 2) ? x2 + 0.5 * CIRCUITSCALE : x2 + 2 * CIRCUITSCALE;
     const xfinal = butterfliesxleft + (n / 2) * BUTTERFLIESSCALE * CIRCUITSCALE + 1.7 * CIRCUITSCALE;
@@ -298,14 +299,14 @@ function fftcircuit(ctx, x, ytop, n, signal, signalLabels) {
             for (let i = 0; i < signalLabels.length; i++) {
                 if (s.length > 0)
                     s += " + ";
-                s += signalLabels[i].replace("a", "a_") + ((i > 0) ? `w^{${(w*i*power) % size}}` : "");
+                s += signalLabels[i].replace("a", "a_") + ((i > 0) ? `w^{${(w * i * power) % size}}` : "");
 
             }
             return s;
         }
         if (Math.abs(xfinal - mouse.x) < 0.5 && Math.abs(ytop + w - mouse.y) < 0.5) {
-            
-            value.innerHTML = `$$${polynomialExpr(signalLabels, size/n)} = ${polynomialExpr(even(signalLabels), 2*size/n)} + ${exprOmega(w*size/n)} \\times (${polynomialExpr(odd(signalLabels), 2*size/n)})$$`;
+
+            value.innerHTML = `$$${polynomialExpr(signalLabels, size / n)} = ${polynomialExpr(even(signalLabels), 2 * size / n)} + ${exprOmega(w * size / n)} \\times (${polynomialExpr(odd(signalLabels), 2 * size / n)})$$`;
             window.renderMathInElement(value)
 
         }
@@ -319,7 +320,7 @@ function fftcircuit(ctx, x, ytop, n, signal, signalLabels) {
     const margin = n / size;
     const MARGINETRA = 0.3;
     const MARGINMIN = 0.3;
-    const rect = { x: x + 2.3 * CIRCUITSCALE, y: ytop - MARGINMIN - MARGINETRA * margin, w: xfinal - x - 3.8 * CIRCUITSCALE, h: n - 1 + 2 * MARGINMIN + MARGINETRA * 2 * margin }
+    const rect = { x: xinitial + 1 * CIRCUITSCALE, y: ytop - MARGINMIN - MARGINETRA * margin, w: xfinal - xinitial - 2.3 * CIRCUITSCALE, h: n - 1 + 2 * MARGINMIN + MARGINETRA * 2 * margin }
     ctx.rect(rect.x, rect.y, rect.w, rect.h);
     ctx.stroke();
     ctx.lineWidth = 0.05;
