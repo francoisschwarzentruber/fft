@@ -1,5 +1,5 @@
 const size = 8; //nb of numbers in the input (and the output)
-const signal = [1, 0, 0, 0, 0, 1, 0, 0].map((n) => ({ a: n, b: 0 }));
+const signal = [1, 0, 0, 0, 0, 0, 0, 0].map((n) => ({ a: n, b: 0 }));
 let mouse = { x: 0, y: 0 };
 const SCALE = 128;
 const SCALECOMPLEX = 0.5;
@@ -8,9 +8,40 @@ const BUTTERFLIESSCALE = 0.7;
 const COLORBUTTERFLY = "pink";
 const LINEWIDTHWIRE = 0.02;
 const LINEWIDTHBUTTERFLY = 0.03;
+const f0 = 150;
 
-const colors = ["rgb(128, 192, 255)", "cyan", "green", "rgb(0, 192, 0)", "yellow", "orange", "rgb(255, 64, 0)", "rgb(255, 0, 192)", ,];
 
+const AudioContext = window.AudioContext ||
+    window.webkitAudioContext;
+const audioCtx = new AudioContext;
+
+
+class SinSound {
+    constructor(freq) {
+        this.freq = freq;
+        this.masterVolume = audioCtx.createGain();
+        this.masterVolume.connect(audioCtx.destination);
+        this.oscillator = audioCtx.createOscillator();
+        this.oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        this.oscillator.connect(this.masterVolume);
+        this.oscillator.start();
+        this.oscillator.type = 'sine';
+        this.setVolume(0);
+    }
+
+
+    setVolume(vol) {
+        if (this.freq <= f0)
+            vol = vol * 6;
+            if (this.freq <= 2*f0)
+            vol = vol * 2;
+        this.masterVolume.gain.value = (vol);
+    }
+
+}
+
+const colors = ["rgb(128, 192, 255)", "cyan", "green", "rgb(0, 255, 0)", "yellow", "orange", "rgb(255, 64, 0)", "rgb(255, 0, 192)", ,];
+const oscillators = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => new SinSound(i * f0));
 
 
 /**
@@ -210,7 +241,6 @@ function drawComplex(ctx, x, y, complexArray) {
 
 
 
-
 /**
  * 
  * @param {*} ctx 
@@ -226,7 +256,7 @@ function fftcircuit(ctx, x, ytop, n, signal, signalLabels) {
     if (n == 1)
         return { x: x, result: signal };
 
-    const xinitial = (n > 2) ? x + 2 * CIRCUITSCALE : x+2*CIRCUITSCALE;
+    const xinitial = (n > 2) ? x + 2 * CIRCUITSCALE : x + 2 * CIRCUITSCALE;
     ctx.strokeStyle = "white";
 
     straightLines(ctx, x, x + 3 * CIRCUITSCALE, ytop, n);
@@ -339,7 +369,6 @@ function draw(ctx) {
     value.innerHTML = "";
     ctx.clearRect(0, 0, 6040, 4080);
 
-
     ctx.save();
     ctx.font = "0.3px Arial"
     ctx.scale(SCALE, SCALE);
@@ -352,6 +381,15 @@ function draw(ctx) {
 draw(canvas.getContext("2d")); //first drawing
 
 
+function vectorToVolume(vector) {
+    return Math.sqrt(vector.a ** 2 + vector.b ** 2) / 5;
+}
+
+
+function updateOscillator(wireChanged) {
+    oscillators[wireChanged].setVolume(vectorToVolume(signal[wireChanged]));
+
+}
 /**
  * handle the modification of the input
  */
@@ -369,6 +407,7 @@ canvas.onmousedown = () => {
             const ix = (mouse.x - 1) * CIRCUITSCALE;
             const iy = -(y - w);
             signal[w] = { a: ix / SCALECOMPLEX, b: iy / SCALECOMPLEX };
+            updateOscillator(w)
             draw(canvas.getContext("2d"));
         }
     }
@@ -386,6 +425,7 @@ canvas.onmousemove = (evt) => {
             const ix = (mouse.x - 1) * CIRCUITSCALE;
             const iy = -(y - wireChanged);
             signal[wireChanged] = { a: ix / SCALECOMPLEX, b: iy / (SCALECOMPLEX) };
+            updateOscillator(wireChanged);
             draw(canvas.getContext("2d"));
         }
     }
